@@ -2,7 +2,7 @@ package chess;
 
 public class ChessBoard {
     public ChessPiece[][] board = new ChessPiece[8][8]; // creating a field for game
-    String nowPlayer;
+    public String nowPlayer;
 
     public ChessBoard() {
         this.nowPlayer = nowPlayer;
@@ -15,16 +15,26 @@ public class ChessBoard {
     public boolean moveToPosition(int startLine, int startColumn, int endLine, int endColumn) {
         if (checkPos(startLine) && checkPos(startColumn)) {
 
-            if (!nowPlayer.equals(board[startLine][startColumn].getColor())) return false;
+            if (!nowPlayer.equals(board[startLine][startColumn].getColor())) {
+                System.out.println("player color != piece color: " + nowPlayer + "   " + board[startLine][startColumn].getColor());
+                return false;
+            }
 
             if (board[startLine][startColumn].canMoveToPosition(this, startLine, startColumn, endLine, endColumn)) {
+                System.out.println("moving piece");
                 board[endLine][endColumn] = board[startLine][startColumn]; // if piece can move, we moved a piece
                 board[startLine][startColumn] = null; // set null to previous cell
                 this.nowPlayer = this.nowPlayer.equals("White") ? "Black" : "White";
 
                 return true;
-            } else return false;
-        } else return false;
+            } else {
+                System.out.println("piece cant move");
+                return false;
+            }
+        } else {
+            System.out.println("start poses not valid");
+            return false;
+        }
     }
 
     public void printBoard() {  //print board in console
@@ -51,5 +61,8 @@ public class ChessBoard {
 
     public boolean checkPos(int pos) {
         return pos >= 0 && pos <= 7;
+    }
+    public int getDirectionForColor(String color) {
+        return color.equals("Black") ? -1 : 1;
     }
 }
