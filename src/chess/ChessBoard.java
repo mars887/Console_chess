@@ -1,10 +1,16 @@
 package chess;
 
+import chess.chessPieces.*;
+
+import java.util.ArrayList;
+
 public class ChessBoard {
     public ChessPiece[][] board = new ChessPiece[8][8]; // creating a field for game
     public String nowPlayer;
+    private ArrayList<King> kings = new ArrayList<>(2);
+    private ArrayList<String> kingNames = new ArrayList<>(2);
 
-    public ChessBoard() {
+    public ChessBoard(String nowPlayer) {
         this.nowPlayer = nowPlayer;
     }
 
@@ -13,28 +19,66 @@ public class ChessBoard {
     }
 
     public boolean moveToPosition(int startLine, int startColumn, int endLine, int endColumn) {
-        if (checkPos(startLine) && checkPos(startColumn)) {
+        if (checkPos(startLine) && checkPos(startColumn) && board[startLine][startColumn] != null) {
 
             if (!nowPlayer.equals(board[startLine][startColumn].getColor())) {
-                System.out.println("player color != piece color: " + nowPlayer + "   " + board[startLine][startColumn].getColor());
                 return false;
             }
 
-            if (board[startLine][startColumn].canMoveToPosition(this, startLine, startColumn, endLine, endColumn)) {
-                System.out.println("moving piece");
+            if (checkPos(startLine) && checkPos(startColumn) && checkPos(endLine) && checkPos(endColumn)
+                    && board[startLine][startColumn].canMoveToPosition(this, startLine, startColumn, endLine, endColumn)) {
+
+                if(board[endLine][endColumn] != null && board[endLine][endColumn].getSymbol().equals("K")) {
+                    System.out.println(board[endLine][endColumn].getColor() + " King killed");
+                }
                 board[endLine][endColumn] = board[startLine][startColumn]; // if piece can move, we moved a piece
                 board[startLine][startColumn] = null; // set null to previous cell
+                board[endLine][endColumn].check = true;
+
+
                 this.nowPlayer = this.nowPlayer.equals("White") ? "Black" : "White";
 
                 return true;
-            } else {
-                System.out.println("piece cant move");
-                return false;
             }
-        } else {
-            System.out.println("start poses not valid");
-            return false;
         }
+        return false;
+    }
+
+    public boolean castling0() {
+        return castling(0);
+    }
+
+    public boolean castling7() {
+        return castling(7);
+    }
+
+    public boolean castling(int type) {
+        int castLine = nowPlayer.equals("White") ? 0 : 7;
+        int KStart = 4;
+        int KEnd = (type == 0 ? 2 : 6);
+        int RStart = (type == 0 ? 0 : 7);
+        int REnd = (type == 0 ? 3 : 5);
+
+        if (board[castLine][RStart] == null || board[castLine][KStart] == null) return false;
+
+        if (board[castLine][RStart].getSymbol().equals("R") && board[castLine][KStart].getSymbol().equals("K") && // check that King and Rook
+
+                ((type == 0 && board[castLine][1] == null && board[castLine][2] == null && board[castLine][3] == null)
+                || (type == 7 && board[castLine][6] == null && board[castLine][5] == null))) {
+
+            if (board[castLine][RStart].getColor().equals(nowPlayer) && board[castLine][KStart].getColor().equals(nowPlayer) &&
+                    board[castLine][RStart].check && board[castLine][KStart].check &&
+                    !new King(nowPlayer).isUnderAttack(this, castLine, KEnd)) {
+                board[castLine][KStart] = null;
+                board[castLine][KEnd] = new King(nowPlayer);   // move King
+                board[castLine][KEnd].check = false;
+                board[castLine][RStart] = null;
+                board[castLine][REnd] = new Rook(nowPlayer);   // move Rook
+                board[castLine][REnd].check = false;
+                nowPlayer = nowPlayer.equals("White") ? "Black" : "White";  // next turn
+                return true;
+            } else return false;
+        } else return false;
     }
 
     public void printBoard() {  //print board in console
@@ -57,12 +101,23 @@ public class ChessBoard {
             System.out.println();
         }
         System.out.println("Player 1(White)");
+        System.out.println();
+        for(int i = 0;i < kings.size();i++) {
+            King king = kings.get(i);
+            if(king.getColor().equals(nowPlayer)) {
+                if(king.isUnderAttack(this)) {
+                    System.out.println("King " + king.getColor() + " is under attack");
+                }
+            }
+        }
     }
 
     public boolean checkPos(int pos) {
         return pos >= 0 && pos <= 7;
     }
-    public int getDirectionForColor(String color) {
-        return color.equals("Black") ? -1 : 1;
+
+    public void addKing(King king, String name) {
+        kings.add(king);
+        kingNames.add(name);
     }
 }
